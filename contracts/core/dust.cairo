@@ -7,20 +7,11 @@ from starkware.cairo.common.uint256 import Uint256, uint256_add
 from starkware.starknet.common.syscalls import get_caller_address
 
 from openzeppelin.token.erc721.library import (
-    ERC721_name,
-    ERC721_symbol,
-    ERC721_balanceOf,
-    ERC721_ownerOf,
-    ERC721_isApprovedForAll,
-    ERC721_setApprovalForAll,
-    ERC721_initializer,
-)
+    ERC721_name, ERC721_symbol, ERC721_balanceOf, ERC721_ownerOf, ERC721_isApprovedForAll,
+    ERC721_setApprovalForAll, ERC721_initializer)
 from openzeppelin.token.erc721_enumerable.library import (
-    ERC721_Enumerable_initializer,
-    ERC721_Enumerable_safeTransferFrom,
-    ERC721_Enumerable_mint,
-    ERC721_Enumerable_burn,
-)
+    ERC721_Enumerable_initializer, ERC721_Enumerable_safeTransferFrom, ERC721_Enumerable_mint,
+    ERC721_Enumerable_burn)
 
 from openzeppelin.introspection.ERC165 import ERC165_supports_interface
 
@@ -56,8 +47,7 @@ end
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    owner : felt, rand_contract_address : felt
-):
+        owner : felt, rand_contract_address : felt):
     ERC721_initializer(name='Dust Non Fungible Token', symbol='DUST')
     ERC721_Enumerable_initializer()
     Ownable_initializer(owner=owner)
@@ -83,32 +73,28 @@ end
 
 @view
 func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
-    balance : Uint256
-):
+        balance : Uint256):
     let (balance : Uint256) = ERC721_balanceOf(owner)
     return (balance)
 end
 
 @view
 func ownerOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    tokenId : Uint256
-) -> (owner : felt):
+        tokenId : Uint256) -> (owner : felt):
     let (owner : felt) = ERC721_ownerOf(tokenId)
     return (owner)
 end
 
 @view
 func isApprovedForAll{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    owner : felt, operator : felt
-) -> (isApproved : felt):
+        owner : felt, operator : felt) -> (isApproved : felt):
     let (isApproved : felt) = ERC721_isApprovedForAll(owner, operator)
     return (isApproved)
 end
 
 @view
 func metadata{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    token_id : Uint256
-) -> (metadata : Dust):
+        token_id : Uint256) -> (metadata : Dust):
     let (metadata : Metadata) = token_metadatas.read(token_id)
     let (dust : Dust) = _to_dust(metadata)
     return (metadata=dust)
@@ -120,16 +106,14 @@ end
 
 @external
 func setApprovalForAll{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    operator : felt, approved : felt
-):
+        operator : felt, approved : felt):
     ERC721_setApprovalForAll(operator, approved)
     return ()
 end
 
 @external
 func safeTransferFrom{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
-    from_ : felt, to : felt, tokenId : Uint256
-):
+        from_ : felt, to : felt, tokenId : Uint256):
     let (data : felt*) = alloc()
     ERC721_Enumerable_safeTransferFrom(from_, to, tokenId, 0, data)
     return ()
@@ -137,19 +121,18 @@ end
 
 @external
 func mint{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(dust : Dust) -> (token_id : Uint256):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(dust : Dust) -> (token_id : Uint256):
     alloc_locals
     Ownable_only_owner()
 
     # Mint token
     let (caller) = get_caller_address()
-    let (local token_id : Uint256) = token_count.read()
+    let (local current_token_count : Uint256) = token_count.read()
+    let (local token_id : Uint256, _) = uint256_add(current_token_count, Uint256(1, 0))
     ERC721_Enumerable_mint(caller, token_id)
 
-    # Increase latest token id
-    let (incremented_token_count : Uint256, _) = uint256_add(token_id, Uint256(1, 0))
-    token_count.write(incremented_token_count)
+    token_count.write(token_id)
 
     # Store metadata
     let (metadata : Metadata) = _from_dust(dust)
@@ -160,16 +143,17 @@ end
 
 @external
 func mint_random_on_border{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(space_size : felt) -> (token_id : Uint256):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(space_size : felt) -> (token_id : Uint256):
     let (metadata : Dust) = _generate_random_metadata_on_border(space_size)
     return mint(metadata)
 end
 
 @external
 func mint_batch{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(metadatas_len : felt, metadatas : Dust*) -> (token_ids_len : felt, token_ids : Uint256*):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(metadatas_len : felt, metadatas : Dust*) -> (
+        token_ids_len : felt, token_ids : Uint256*):
     alloc_locals
     let (local token_ids : Uint256*) = alloc()
     _mint_batch_loop(metadatas_len, metadatas, token_ids)
@@ -178,8 +162,9 @@ end
 
 @external
 func mint_batch_random_on_border{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(space_size : felt, token_count : felt) -> (token_ids_len : felt, token_ids : Uint256*):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(space_size : felt, token_count : felt) -> (
+        token_ids_len : felt, token_ids : Uint256*):
     alloc_locals
 
     let (local token_ids : Uint256*) = alloc()
@@ -189,8 +174,9 @@ func mint_batch_random_on_border{
 end
 
 func _mint_random_on_border_loop{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(space_size : felt, token_ids_len : felt, token_ids : Uint256*):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(
+        space_size : felt, token_ids_len : felt, token_ids : Uint256*):
     if token_ids_len == 0:
         return ()
     end
@@ -214,8 +200,7 @@ end
 
 @external
 func move{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
-    token_id : Uint256
-) -> (metadata : Dust):
+        token_id : Uint256) -> (metadata : Dust):
     alloc_locals
     Ownable_only_owner()
 
@@ -230,8 +215,9 @@ func move{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
 end
 
 func _mint_batch_loop{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(metadatas_len : felt, metadatas : Dust*, next_token : Uint256*):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(
+        metadatas_len : felt, metadatas : Dust*, next_token : Uint256*):
     if metadatas_len == 0:
         return ()
     end
@@ -243,8 +229,7 @@ func _mint_batch_loop{
 end
 
 func _move{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(dust : Dust) -> (
-    dust : Dust
-):
+        dust : Dust):
     alloc_locals
 
     let (new_hdir) = _get_new_hdir(dust)
@@ -262,8 +247,7 @@ func _move{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(du
 end
 
 func _get_new_hdir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    dust : Dust
-) -> (hdir : felt):
+        dust : Dust) -> (hdir : felt):
     if dust.position.x == dust.space_size - 1:
         if dust.direction.x == 1:
             return (hdir=-1)
@@ -280,8 +264,7 @@ func _get_new_hdir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check
 end
 
 func _get_new_vdir{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    dust : Dust
-) -> (vdir : felt):
+        dust : Dust) -> (vdir : felt):
     if dust.position.y == dust.space_size - 1:
         if dust.direction.y == 1:
             return (vdir=-1)
@@ -299,17 +282,17 @@ end
 
 # Generate random metadata given a space size
 func _generate_random_metadata_on_border{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr, bitwise_ptr : BitwiseBuiltin*
-}(space_size : felt) -> (metadata : Dust):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+        bitwise_ptr : BitwiseBuiltin*}(space_size : felt) -> (metadata : Dust):
     alloc_locals
     local metadata : Dust
     assert metadata.space_size = space_size
 
     let (last_token_id) = token_count.read()
+    let (next_token_id, _) = uint256_add(last_token_id, Uint256(1, 0))
     let (rand_contract_address) = rand_contract.read()
     let (r1, r2, r3, r4, r5) = IRandom.generate_random_numbers(
-        rand_contract_address, last_token_id.low
-    )
+        rand_contract_address, next_token_id.low)
 
     let (direction : Vector2) = _generate_random_direction(r1, r2)
     assert metadata.direction = direction
@@ -322,8 +305,7 @@ end
 
 # Generate a random direction x, y where x,y are wither -1, 0 or 1
 func _generate_random_direction{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
-    r1, r2
-) -> (direction : Vector2):
+        r1, r2) -> (direction : Vector2):
     alloc_locals
     local direction : Vector2
 
@@ -338,8 +320,8 @@ end
 
 # Generate a random position on a given border (top, left, right, bottom)
 func _generate_random_position_on_border{
-    pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr
-}(space_size : felt, r1, r2, r3) -> (position : Vector2):
+        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
+        space_size : felt, r1, r2, r3) -> (position : Vector2):
     alloc_locals
 
     # x is 0 or space_size - 1
@@ -354,8 +336,7 @@ end
 
 # given x, y return randomly Position(x,y) or Position(y,x)
 func _shuffled_position{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
-    x : felt, y : felt, r
-) -> (position : Vector2):
+        x : felt, y : felt, r) -> (position : Vector2):
     alloc_locals
     local position : Vector2
 
@@ -373,8 +354,7 @@ end
 
 # generate a random number x where min <= x <= max
 func _set_in_range{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
-    value, min : felt, max : felt
-) -> (value : felt):
+        value, min : felt, max : felt) -> (value : felt):
     assert_lt(min, max)  # min < max
 
     let range = max - min + 1
@@ -383,8 +363,7 @@ func _set_in_range{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check
 end
 
 func _from_dust{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(dust : Dust) -> (
-    metadata : Metadata
-):
+        metadata : Metadata):
     alloc_locals
 
     local metadata : Metadata
@@ -396,8 +375,7 @@ func _from_dust{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_pt
 end
 
 func _to_dust{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
-    metadata : Metadata
-) -> (dust : Dust):
+        metadata : Metadata) -> (dust : Dust):
     alloc_locals
 
     local dust : Dust
