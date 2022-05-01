@@ -24,3 +24,4 @@ func view_dust{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     let (res) = dust.read(address)
     return (res)
 end
+
