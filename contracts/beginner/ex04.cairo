@@ -21,11 +21,6 @@ end
 func slot(address : felt) -> (slot : felt):
 end
 
-# This storage keep the count of addresses ranks
-# 0 for human
-# 1 for `Start Creator`
-# 2 for `Stellar System Engineer`
-# 3 for `Great Architect of the Universe`
 @storage_var
 func rank(address : felt) -> (slot : felt):
 end
@@ -81,12 +76,22 @@ func insert_star{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_p
 
     slot.write(address, current_slot + 1)
 
-    # TODO
-    # If the new user slot is equal to 1, 10 or 100, increment the caller rank
-    # You will be confronted to revoked referenced
-    # https://www.cairo-lang.org/docs/how_cairo_works/consts.html#revoked-references
-    # That's one of the most tricky feature of cairo. Treat yourself !
-    # Also, Cairo doesn't support `elif`, neither chaining multiple comparaisons on a single `if` arm 😔
+    let (current_rank) = rank.read(address)
+
+    if current_slot == 1:
+        rank.write(address, current_rank + 1)
+        return()
+    end
+
+    if current_slot == 10:
+        rank.write(address, current_rank + 1)
+        return()
+    end
+
+    if current_slot == 100:
+        rank.write(address, current_rank + 1)
+        return()
+    end
 
     a_star_is_born.emit(address, current_slot, new_star)
 
@@ -122,7 +127,6 @@ func view_slot{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr
     return (res)
 end
 
-# A view to the `rank` storage
 @view
 func view_rank{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         address : felt) -> (amount : felt):
