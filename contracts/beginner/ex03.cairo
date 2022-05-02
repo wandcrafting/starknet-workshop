@@ -47,16 +47,13 @@ end
 
 func batch_create_stars{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         address : felt, array_len : felt, array : Star*):
-    # Successively insert all the array stars in the storage
-    # There is no loops in cairo, we use recursion
-    # https://www.cairo-lang.org/docs/hello_starknet/more_features.html#array-arguments-in-calldata
-    # The stars must be inserted in same order as they appear in the array
 
-    # TODO
-    # Write a stop condition
-    # Insert the star at index 0 of the array
-    # recursively call `batch_create_stars`
+    if array_len == 0:
+        return()
+    end
 
+    insert_star(address, [array])
+    batch_create_stars(address, array_len - 1, &array[1])
     return ()
 end
 
