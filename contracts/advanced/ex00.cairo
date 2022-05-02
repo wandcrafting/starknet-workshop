@@ -1,11 +1,5 @@
 %lang starknet
 
-# What to do in this exercise ?
-#
-# We will use the openzeppelin libraries to implement our own ERC721 token
-# You will find some function definition in this file and have to implement their body.
-# Nothing to hairy, just use the openzepelin provided functions
-
 from starkware.cairo.common.cairo_builtins import HashBuiltin, SignatureBuiltin, BitwiseBuiltin
 from starkware.cairo.common.alloc import alloc
 from starkware.cairo.common.math import unsigned_div_rem, assert_lt
@@ -32,10 +26,9 @@ from contracts.interfaces.irand import IRandom
 
 @constructor
 func constructor{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt):
-    # TODO
-    # Init the contract as an ERC721, symbol is `DUST`, name is `Dust Non Fungible Token`
-    # Init the contract as an ERC721 Enumerable
-    # Init the contract as Ownable
+    ERC721_initializer('Dust Non Fungible Token','DUST')
+    ERC721_Enumerable_initializer()
+    Ownable_initializer(owner)
     return ()
 end
 
@@ -45,35 +38,35 @@ end
 
 @view
 func name{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (name : felt):
-    # TODO
-    # Return the name of the contract
+    let (name) = ERC721_name()
+    return (name)
 end
 
 @view
 func symbol{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}() -> (symbol : felt):
-    # TODO
-    # Return the symbol of the contract
+    let (symbol) = ERC721_symbol()
+    return (symbol)
 end
 
 @view
 func balanceOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(owner : felt) -> (
         balance : Uint256):
-    # TODO
-    # Return the balance of an user
+    let (balance) = ERC721_balanceOf(owner)
+    return (balance)
 end
 
 @view
 func ownerOf{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         tokenId : Uint256) -> (owner : felt):
-    # TODO
-    # Return the owner of a token
+    let (owner) = ERC721_ownerOf(tokenId)
+    return (owner)
 end
 
 @view
 func isApprovedForAll{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         owner : felt, operator : felt) -> (isApproved : felt):
-    # TODO
-    # Return the approval status for an owner and an operator
+    let (isApproved) = ERC721_isApprovedForAll(owner, operator)
+    return (isApproved)
 end
 
 #
@@ -83,35 +76,34 @@ end
 @external
 func setApprovalForAll{syscall_ptr : felt*, pedersen_ptr : HashBuiltin*, range_check_ptr}(
         operator : felt, approved : felt):
-    # TODO
-    # Set the approval for all of approved for operator
+    ERC721_setApprovalForAll(operator, approved)
     return ()
 end
 
 @external
 func safeTransferFrom{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(
         from_ : felt, to : felt, tokenId : Uint256):
-    # TODO
-    # Do a safe transfer of token
+    let (data) = alloc()
+    ERC721_Enumerable_safeTransferFrom(from_, to, tokenId, 0, data)
+    return ()
 end
 
-@external
-func mint{
-        pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
-        bitwise_ptr : BitwiseBuiltin*}(dust : Dust) -> (token_id : Uint256):
-    alloc_locals
-
-    # TODO
-    # Restrict this call to `only_owner`
-    # Mint the token
-    # Return it's ID
-end
+# @external
+# func mint{
+#         pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr,
+#         bitwise_ptr : BitwiseBuiltin*}(dust : Dust) -> (token_id : Uint256):
+#     alloc_locals
+#     Ownable_only_owner()
+    
+#     #to, tokenId, data_len, data
+#     #ERC721_Enumerable_mint(dust)
+#     let token_id = uint256(3)
+#     return ()
+# end
 
 @external
 func burn{pedersen_ptr : HashBuiltin*, syscall_ptr : felt*, range_check_ptr}(token_id : Uint256):
-    # TODO
-    # Restrict this call to `only_owner`
-    # Burn token
-
+    Ownable_only_owner()
+    ERC721_Enumerable_burn(token_id)
     return ()
 end
